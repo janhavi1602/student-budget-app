@@ -1,0 +1,19 @@
+{
+    "transactions": [
+        {
+            "type": "income",
+            "category": "pocket money",
+            "description": "(january)",
+            "amount": 1500.0,
+            "month": "February 2026"
+        },
+        {
+            "type": "expense",
+            "category": "transportation",
+            "description": "bus",
+            "amount": 100.0,
+            "month": "February 2026"
+        }
+    ],
+    "monthly_limit": 1000.0
+}
