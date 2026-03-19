@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signup - Budget Buddy</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            width: 320px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px gray;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #4facfe;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3a8be0;
+        }
+
+        .error {
+            color: red;
+        }
+
+        a {
+            text-decoration: none;
+            color: blue;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>Create Account</h2>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="Enter Username" required><br>
+        <input type="password" name="password" placeholder="Enter Password" required><br>
+        <button type="submit">Signup</button>
+    </form>
+
+    <br>
+
+    <p>Already have an account?</p>
+    <a href="/">Login here</a>
+
+</div>
+
+</body>
+</html>
