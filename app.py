@@ -1,69 +1,80 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, session
 import json
 import os
 
 app = Flask(__name__)
+app.secret_key = "secret123"
 
-# Create users file if it does not exist
+
+# Ensure users.json exists
 if not os.path.exists("users.json"):
-    with open("users.json", "w") as file:
-        json.dump([], file)
+    with open("users.json", "w") as f:
+        json.dump([], f)
 
 
-# LOGIN PAGE
-@app.route('/signup', methods=['GET','POST'])
-def signup():
-    return render_template('signup.html')
-
+# 🔐 LOGIN
+@app.route('/', methods=['GET', 'POST'])
+def login():
     if request.method == 'POST':
-
         username = request.form['username']
         password = request.form['password']
 
-        with open('users.json', 'r') as file:
-            users = json.load(file)
+        with open("users.json", "r") as f:
+            users = json.load(f)
 
         for user in users:
             if user['username'] == username and user['password'] == password:
+                session['user'] = username
                 return redirect('/dashboard')
 
-        return "Invalid Username or Password"
+        return render_template('login.html', error="Invalid Username or Password")
 
     return render_template('login.html')
 
 
-# SIGNUP PAGE
+# 📝 SIGNUP
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-
     if request.method == 'POST':
-
         username = request.form['username']
         password = request.form['password']
 
-        with open('users.json', 'r') as file:
-            users = json.load(file)
+        with open("users.json", "r") as f:
+            users = json.load(f)
+
+        # Check if user already exists
+        for user in users:
+            if user['username'] == username:
+                return render_template('signup.html', error="Username already exists")
 
         users.append({
             "username": username,
             "password": password
         })
 
-        with open('users.json', 'w') as file:
-            json.dump(users, file)
+        with open("users.json", "w") as f:
+            json.dump(users, f)
 
-        return redirect(url_for('login'))
+        return redirect('/')
 
     return render_template('signup.html')
 
 
-# DASHBOARD PAGE
+# 📊 DASHBOARD
 @app.route('/dashboard')
 def dashboard():
-    return render_template('index.html')
+    if 'user' in session:
+        return render_template('index.html', username=session['user'])
+    return redirect('/')
 
 
-# RUN APP
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+# 🚪 LOGOUT
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/')
+
+
+# 🚀 RUN
+if __name__ == '__main__':
+    app.run(debug=True)
