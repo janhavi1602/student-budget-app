@@ -10,6 +10,12 @@
             font-family: Arial;
             margin: 0;
             background: #f4f6f9;
+            transition: 0.3s;
+        }
+
+        .dark {
+            background: #121212;
+            color: white;
         }
 
         .navbar {
@@ -41,6 +47,10 @@
             box-shadow: 0px 0px 10px gray;
         }
 
+        .dark .card {
+            background: #1e1e1e;
+        }
+
         .btn {
             background: #4facfe;
             color: white;
@@ -49,6 +59,16 @@
             border-radius: 5px;
             margin: 10px;
             cursor: pointer;
+        }
+
+        select, input {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        canvas {
+            max-width: 400px;
+            margin: auto;
         }
 
         footer {
@@ -62,55 +82,95 @@
 
 <div class="navbar">
     <h2>💰 Budget Buddy</h2>
-    <a href="/logout" style="color:white;">Logout</a>
+    <div>
+        <button class="btn" onclick="toggleMode()">🌙 Mode</button>
+        <a href="/logout" style="color:white;">Logout</a>
+    </div>
 </div>
 
 <div class="container">
 
-    <h2>Welcome to your Dashboard 👋</h2>
+    <h2>Welcome, {{ username }} 👋</h2>
 
-    <div class="cards">
-        <div class="card">
-            <h3>Total Income</h3>
-            <p>₹5000</p>
-        </div>
+    <!-- CATEGORY INPUT -->
+    <h3>Add Expense</h3>
 
-        <div class="card">
-            <h3>Total Expense</h3>
-            <p>₹3200</p>
-        </div>
+    <select id="category">
+        <option>Food</option>
+        <option>Transport</option>
+        <option>Shopping</option>
+        <option>Entertainment</option>
+    </select>
 
-        <div class="card">
-            <h3>Balance</h3>
-            <p>₹1800</p>
-        </div>
-    </div>
+    <input type="number" id="amount" placeholder="Enter Amount">
+    <button class="btn" onclick="addExpense()">Add</button>
 
-    <br>
-
-    <button class="btn">Add Income</button>
-    <button class="btn">Add Expense</button>
-
-    <br><br>
-
+    <!-- PIE CHART -->
+    <h3>Expense Chart</h3>
     <canvas id="chart"></canvas>
+
+    <!-- HISTORY -->
+    <h3>History</h3>
+    <ul id="history"></ul>
 
 </div>
 
 <footer>
-    <p>© 2026 Budget Buddy | Mini Project</p>
+    <p>© 2026 Budget Buddy</p>
 </footer>
 
 <script>
-new Chart(document.getElementById("chart"), {
+let data = {
+    Food: 0,
+    Transport: 0,
+    Shopping: 0,
+    Entertainment: 0
+};
+
+let historyList = [];
+
+let chart = new Chart(document.getElementById("chart"), {
     type: 'pie',
     data: {
-        labels: ['Food','Transport','Shopping','Entertainment'],
+        labels: Object.keys(data),
         datasets: [{
-            data: [500,300,200,150]
+            data: Object.values(data)
         }]
     }
 });
+
+function addExpense() {
+    let category = document.getElementById("category").value;
+    let amount = parseInt(document.getElementById("amount").value);
+
+    if (!amount) return;
+
+    data[category] += amount;
+    historyList.push(category + " - ₹" + amount);
+
+    updateChart();
+    updateHistory();
+}
+
+function updateChart() {
+    chart.data.datasets[0].data = Object.values(data);
+    chart.update();
+}
+
+function updateHistory() {
+    let list = document.getElementById("history");
+    list.innerHTML = "";
+
+    historyList.forEach(item => {
+        let li = document.createElement("li");
+        li.textContent = item;
+        list.appendChild(li);
+    });
+}
+
+function toggleMode() {
+    document.body.classList.toggle("dark");
+}
 </script>
 
 </body>
