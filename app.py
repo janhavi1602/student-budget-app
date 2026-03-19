@@ -1,167 +1,69 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, url_for
 import json
 import os
-from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
 
-DATA_FILE = "data.json"
+# Create users file if it does not exist
+if not os.path.exists("users.json"):
+    with open("users.json", "w") as file:
+        json.dump([], file)
 
-# ----------------------------
-# Load Data
-# ----------------------------
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        return {"transactions": [], "monthly_limit": 0}
-    with open(DATA_FILE, "r") as file:
-        return json.load(file)
 
-# ----------------------------
-# Save Data
-# ----------------------------
-def save_data(data):
-    with open(DATA_FILE, "w") as file:
-        json.dump(data, file, indent=4)
+# LOGIN PAGE
+@app.route('/signup', methods=['GET','POST'])
+def signup():
+    return render_template('signup.html')
 
-# ----------------------------
-# Login
-# ----------------------------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+    if request.method == 'POST':
 
-        if username == "admin" and password == "1234":
-            session["user"] = username
-            return redirect("/")
-        else:
-            return render_template("login.html", error="Invalid Credentials")
+        username = request.form['username']
+        password = request.form['password']
 
-    return render_template("login.html")
+        with open('users.json', 'r') as file:
+            users = json.load(file)
 
-# ----------------------------
-# Logout
-# ----------------------------
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect("/login")
+        for user in users:
+            if user['username'] == username and user['password'] == password:
+                return redirect('/dashboard')
 
-# ----------------------------
-# Dashboard
-# ----------------------------
-@app.route("/")
-def index():
-    if "user" not in session:
-        return redirect("/login")
+        return "Invalid Username or Password"
 
-    data = load_data()
-    transactions = data["transactions"]
-    monthly_limit = data.get("monthly_limit", 0)
+    return render_template('login.html')
 
-    total_income = sum(t["amount"] for t in transactions if t["type"] == "income")
-    total_expense = sum(t["amount"] for t in transactions if t["type"] == "expense")
-    balance = total_income - total_expense
 
-    current_month = datetime.now().strftime("%B %Y")
+# SIGNUP PAGE
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
 
-    monthly_expense = sum(
-        t["amount"] for t in transactions
-        if t["type"] == "expense" and t["month"] == current_month
-    )
+    if request.method == 'POST':
 
-    percentage = 0
-    if monthly_limit > 0:
-        percentage = (monthly_expense / monthly_limit) * 100
+        username = request.form['username']
+        password = request.form['password']
 
-    category_totals = {}
-    for t in transactions:
-        if t["type"] == "expense" and t["month"] == current_month:
-            category_totals[t["category"]] = category_totals.get(t["category"], 0) + t["amount"]
+        with open('users.json', 'r') as file:
+            users = json.load(file)
 
-    return render_template("index.html",
-                           transactions=transactions,
-                           balance=balance,
-                           total_income=total_income,
-                           total_expense=total_expense,
-                           monthly_expense=monthly_expense,
-                           monthly_limit=monthly_limit,
-                           percentage=percentage,
-                           category_totals=category_totals)
+        users.append({
+            "username": username,
+            "password": password
+        })
 
-# ----------------------------
-# Add Transaction
-# ----------------------------
-@app.route("/add", methods=["POST"])
-def add():
-    if "user" not in session:
-        return redirect("/login")
+        with open('users.json', 'w') as file:
+            json.dump(users, file)
 
-    data = load_data()
+        return redirect(url_for('login'))
 
-    transaction = {
-        "type": request.form.get("type"),
-        "category": request.form.get("category"),
-        "description": request.form.get("description"),
-        "amount": float(request.form.get("amount")),
-        "month": datetime.now().strftime("%B %Y")
-    }
+    return render_template('signup.html')
 
-    data["transactions"].append(transaction)
-    save_data(data)
 
-    return redirect("/")
+# DASHBOARD PAGE
+@app.route('/dashboard')
+def dashboard():
+    return render_template('index.html')
 
-# ----------------------------
-# Delete
-# ----------------------------
-@app.route("/delete/<int:index>")
-def delete(index):
-    if "user" not in session:
-        return redirect("/login")
 
-    data = load_data()
-    if 0 <= index < len(data["transactions"]):
-        data["transactions"].pop(index)
-        save_data(data)
-
-    return redirect("/")
-
-# ----------------------------
-# Set Monthly Limit
-# ----------------------------
-@app.route("/set_limit", methods=["POST"])
-def set_limit():
-    if "user" not in session:
-        return redirect("/login")
-
-    data = load_data()
-    data["monthly_limit"] = float(request.form.get("limit"))
-    save_data(data)
-
-    return redirect("/")
-
-# ----------------------------
-# Monthly History
-# ----------------------------
-@app.route("/history")
-def history():
-    if "user" not in session:
-        return redirect("/login")
-
-    data = load_data()
-    transactions = data["transactions"]
-
-    monthly_data = {}
-
-    for t in transactions:
-        if t["type"] == "expense":
-            month = t["month"]
-            monthly_data[month] = monthly_data.get(month, 0) + t["amount"]
-
-    return render_template("history.html", monthly_data=monthly_data)
-
+# RUN APP
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
