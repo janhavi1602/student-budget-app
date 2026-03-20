@@ -8,13 +8,28 @@
     <style>
         body {
             font-family: Arial;
+            margin: 0;
             background: #f4f6f9;
-            text-align: center;
+            transition: 0.3s;
+        }
+
+        .dark {
+            background: #121212;
+            color: white;
+        }
+
+        .navbar {
+            background: #4facfe;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .container {
             width: 80%;
             margin: auto;
+            text-align: center;
         }
 
         .card {
@@ -23,6 +38,10 @@
             margin: 15px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px gray;
+        }
+
+        .dark .card {
+            background: #1e1e1e;
         }
 
         button {
@@ -38,14 +57,27 @@
             max-width: 400px;
             margin: auto;
         }
+
+        a {
+            text-decoration: none;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
 
+<div class="navbar">
+    <h2>💰 Budget Buddy</h2>
+    <div>
+        <button onclick="toggleMode()">🌙 Mode</button>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
 <div class="container">
 
-<h2>Welcome, {{ username }}</h2>
+<h2>Welcome, {{ username }} 👋</h2>
 
 <div class="card">
     <h3>Summary</h3>
@@ -94,8 +126,6 @@
     </ul>
 </div>
 
-<a href="/logout">Logout</a>
-
 </div>
 
 <script>
@@ -115,10 +145,21 @@ new Chart(document.getElementById("chart"), {
     data: {
         labels: Object.keys(categoryTotals),
         datasets: [{
-            data: Object.values(categoryTotals)
+            data: Object.values(categoryTotals),
+            backgroundColor: [
+                "#ff6384",
+                "#36a2eb",
+                "#ffcd56",
+                "#4bc0c0"
+            ]
         }]
     }
 });
+
+// 🌙 Dark mode toggle
+function toggleMode() {
+    document.body.classList.toggle("dark");
+}
 </script>
 
 </body>
