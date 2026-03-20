@@ -2,47 +2,124 @@
 <html>
 <head>
     <title>Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            text-align: center;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px gray;
+        }
+
+        button {
+            padding: 8px 15px;
+            background: #4facfe;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        canvas {
+            max-width: 400px;
+            margin: auto;
+        }
+    </style>
 </head>
 
 <body>
 
+<div class="container">
+
 <h2>Welcome, {{ username }}</h2>
 
-<h3>Summary</h3>
-<p>Income: ₹{{ income }}</p>
-<p>Expense: ₹{{ total_expense }}</p>
-<p>Balance: ₹{{ balance }}</p>
+<div class="card">
+    <h3>Summary</h3>
+    <p>Income: ₹{{ income }}</p>
+    <p>Expense: ₹{{ total_expense }}</p>
+    <p>Balance: ₹{{ balance }}</p>
+</div>
 
-<h3>Add Income</h3>
-<form method="POST" action="/add_income">
-    <input type="number" name="amount" required>
-    <button>Add Income</button>
-</form>
+<div class="card">
+    <h3>Add Income</h3>
+    <form method="POST" action="/add_income">
+        <input type="number" name="amount" required>
+        <button>Add</button>
+    </form>
+</div>
 
-<h3>Add Expense</h3>
-<form method="POST" action="/add_expense">
-    <select name="category">
-        <option>Food</option>
-        <option>Transport</option>
-        <option>Shopping</option>
-        <option>Entertainment</option>
-    </select>
-    <input type="number" name="amount" required>
-    <button>Add Expense</button>
-</form>
+<div class="card">
+    <h3>Add Expense</h3>
+    <form method="POST" action="/add_expense">
+        <select name="category">
+            <option>Food</option>
+            <option>Transport</option>
+            <option>Shopping</option>
+            <option>Entertainment</option>
+        </select>
 
-<h3>History</h3>
-<ul>
-{% for item in expenses %}
-    <li>
-        {{ item.category }} - ₹{{ item.amount }}
-        <a href="/delete/{{ loop.index0 }}">Delete</a>
-    </li>
-{% endfor %}
-</ul>
+        <input type="number" name="amount" required>
+        <button>Add</button>
+    </form>
+</div>
 
-<br>
+<div class="card">
+    <h3>Expense Chart</h3>
+    <canvas id="chart"></canvas>
+</div>
+
+<div class="card">
+    <h3>History</h3>
+    <ul>
+    {% for item in expenses %}
+        <li>
+            {{ item.category }} - ₹{{ item.amount }}
+            <a href="/delete/{{ loop.index0 }}">❌</a>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+
 <a href="/logout">Logout</a>
+
+</div>
+
+<script>
+let expenses = {{ expenses|tojson }};
+
+let categoryTotals = {};
+
+expenses.forEach(item => {
+    if (!categoryTotals[item.category]) {
+        categoryTotals[item.category] = 0;
+    }
+    categoryTotals[item.category] += item.amount;
+});
+
+new Chart(document.getElementById("chart"), {
+    type: 'pie',
+    data: {
+        labels: Object.keys(categoryTotals),
+        datasets: [{
+            data: Object.values(categoryTotals)
+        }]
+    }
+});
+</script>
 
 </body>
 </html>
