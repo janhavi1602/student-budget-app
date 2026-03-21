@@ -44,7 +44,7 @@ def signup():
 
         for user in users:
             if user['username'] == username:
-                return render_template('signup.html', error="Username already exists")
+                return render_template('signup.html', error="Username exists")
 
         users.append({"username": username, "password": password})
         json.dump(users, open("users.json", "w"))
@@ -96,12 +96,14 @@ def add_income():
     return redirect('/dashboard')
 
 
-# ADD EXPENSE
+# ADD EXPENSE (UPDATED WITH MONTH + DATE)
 @app.route('/add_expense', methods=['POST'])
 def add_expense():
     username = session['user']
     category = request.form['category']
     amount = int(request.form['amount'])
+    month = request.form['month']
+    date = request.form['date']
 
     data = json.load(open("data.json"))
 
@@ -110,7 +112,9 @@ def add_expense():
 
     data[username]["expenses"].append({
         "category": category,
-        "amount": amount
+        "amount": amount,
+        "month": month,
+        "date": date
     })
 
     json.dump(data, open("data.json", "w"))
@@ -139,8 +143,5 @@ def logout():
     return redirect('/')
 
 
-import os
-
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
