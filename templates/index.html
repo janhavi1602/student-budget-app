@@ -59,8 +59,7 @@
         }
 
         a {
-            text-decoration: none;
-            color: white;
+            color: red;
         }
     </style>
 </head>
@@ -97,6 +96,7 @@
 <div class="card">
     <h3>Add Expense</h3>
     <form method="POST" action="/add_expense">
+
         <select name="category">
             <option>Food</option>
             <option>Transport</option>
@@ -104,7 +104,25 @@
             <option>Entertainment</option>
         </select>
 
+        <select name="month">
+            <option>January</option>
+            <option>February</option>
+            <option>March</option>
+            <option>April</option>
+            <option>May</option>
+            <option>June</option>
+            <option>July</option>
+            <option>August</option>
+            <option>September</option>
+            <option>October</option>
+            <option>November</option>
+            <option>December</option>
+        </select>
+
+        <input type="date" name="date" required>
+
         <input type="number" name="amount" required>
+
         <button>Add</button>
     </form>
 </div>
@@ -120,6 +138,7 @@
     {% for item in expenses %}
         <li>
             {{ item.category }} - ₹{{ item.amount }}
+            ({{ item.month }} | {{ item.date }})
             <a href="/delete/{{ loop.index0 }}">❌</a>
         </li>
     {% endfor %}
@@ -146,17 +165,11 @@ new Chart(document.getElementById("chart"), {
         labels: Object.keys(categoryTotals),
         datasets: [{
             data: Object.values(categoryTotals),
-            backgroundColor: [
-                "#ff6384",
-                "#36a2eb",
-                "#ffcd56",
-                "#4bc0c0"
-            ]
+            backgroundColor: ["#ff6384","#36a2eb","#ffcd56","#4bc0c0"]
         }]
     }
 });
 
-// 🌙 Dark mode toggle
 function toggleMode() {
     document.body.classList.toggle("dark");
 }
