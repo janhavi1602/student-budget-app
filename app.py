@@ -1,17 +1,48 @@
 from flask import Flask, render_template, request, redirect, session
-import json, os
+import sqlite3
+import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# Create files if not exist
-if not os.path.exists("users.json"):
-    with open("users.json", "w") as f:
-        json.dump([], f)
+DB = "database.db"
 
-if not os.path.exists("data.json"):
-    with open("data.json", "w") as f:
-        json.dump({}, f)
+# CREATE TABLES
+def init_db():
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        category TEXT,
+        amount INTEGER,
+        month TEXT,
+        date TEXT
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS income (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        amount INTEGER
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
 
 
 # LOGIN
@@ -21,12 +52,17 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        users = json.load(open("users.json"))
+        conn = sqlite3.connect(DB)
+        cur = conn.cursor()
 
-        for user in users:
-            if user['username'] == username and user['password'] == password:
-                session['user'] = username
-                return redirect('/dashboard')
+        cur.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+        user = cur.fetchone()
+
+        conn.close()
+
+        if user:
+            session['user'] = username
+            return redirect('/dashboard')
 
         return render_template('login.html', error="Invalid credentials")
 
@@ -40,15 +76,16 @@ def signup():
         username = request.form['username']
         password = request.form['password']
 
-        users = json.load(open("users.json"))
+        conn = sqlite3.connect(DB)
+        cur = conn.cursor()
 
-        for user in users:
-            if user['username'] == username:
-                return render_template('signup.html', error="Username exists")
+        try:
+            cur.execute("INSERT INTO users (username,password) VALUES (?,?)", (username,password))
+            conn.commit()
+        except:
+            return render_template('signup.html', error="Username already exists")
 
-        users.append({"username": username, "password": password})
-        json.dump(users, open("users.json", "w"))
-
+        conn.close()
         return redirect('/')
 
     return render_template('signup.html')
@@ -61,18 +98,39 @@ def dashboard():
         return redirect('/')
 
     username = session['user']
-    data = json.load(open("data.json"))
 
-    user_data = data.get(username, {"income": 0, "expenses": []})
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
 
-    total_expense = sum(item["amount"] for item in user_data["expenses"])
-    balance = user_data["income"] - total_expense
+    # income
+    cur.execute("SELECT SUM(amount) FROM income WHERE username=?", (username,))
+    income = cur.fetchone()[0] or 0
+
+    # expenses
+    cur.execute("SELECT category, amount, month, date FROM expenses WHERE username=?", (username,))
+    rows = cur.fetchall()
+
+    expenses = []
+    total_expense = 0
+
+    for row in rows:
+        expenses.append({
+            "category": row[0],
+            "amount": row[1],
+            "month": row[2],
+            "date": row[3]
+        })
+        total_expense += row[1]
+
+    balance = income - total_expense
+
+    conn.close()
 
     return render_template(
         'index.html',
         username=username,
-        income=user_data["income"],
-        expenses=user_data["expenses"],
+        income=income,
+        expenses=expenses,
         total_expense=total_expense,
         balance=balance
     )
@@ -84,19 +142,18 @@ def add_income():
     username = session['user']
     amount = int(request.form['amount'])
 
-    data = json.load(open("data.json"))
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
 
-    if username not in data:
-        data[username] = {"income": 0, "expenses": []}
+    cur.execute("INSERT INTO income (username, amount) VALUES (?,?)", (username, amount))
 
-    data[username]["income"] += amount
-
-    json.dump(data, open("data.json", "w"))
+    conn.commit()
+    conn.close()
 
     return redirect('/dashboard')
 
 
-# ADD EXPENSE (UPDATED WITH MONTH + DATE)
+# ADD EXPENSE
 @app.route('/add_expense', methods=['POST'])
 def add_expense():
     username = session['user']
@@ -105,19 +162,16 @@ def add_expense():
     month = request.form['month']
     date = request.form['date']
 
-    data = json.load(open("data.json"))
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
 
-    if username not in data:
-        data[username] = {"income": 0, "expenses": []}
+    cur.execute("""
+        INSERT INTO expenses (username, category, amount, month, date)
+        VALUES (?,?,?,?,?)
+    """, (username, category, amount, month, date))
 
-    data[username]["expenses"].append({
-        "category": category,
-        "amount": amount,
-        "month": month,
-        "date": date
-    })
-
-    json.dump(data, open("data.json", "w"))
+    conn.commit()
+    conn.close()
 
     return redirect('/dashboard')
 
@@ -126,12 +180,14 @@ def add_expense():
 @app.route('/delete/<int:index>')
 def delete(index):
     username = session['user']
-    data = json.load(open("data.json"))
 
-    if username in data:
-        data[username]["expenses"].pop(index)
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
 
-    json.dump(data, open("data.json", "w"))
+    cur.execute("DELETE FROM expenses WHERE id=?", (index,))
+    conn.commit()
+
+    conn.close()
 
     return redirect('/dashboard')
 
@@ -144,4 +200,5 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
