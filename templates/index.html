@@ -3,58 +3,98 @@
 <head>
     <title>Dashboard</title>
 
-    <!-- Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            background: linear-gradient(to right, #667eea, #764ba2);
+            font-family: 'Segoe UI';
+            display: flex;
         }
 
         .dark {
-            background: #0f172a;
+            background: #121212;
             color: white;
         }
 
-        .navbar {
-            background: rgba(255,255,255,0.2);
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            height: 100vh;
+            background: #2d3436;
             color: white;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
+            padding: 20px;
         }
 
-        .container {
-            width: 85%;
-            margin: auto;
+        .sidebar h2 {
             text-align: center;
         }
 
-        .card {
-            background: rgba(255,255,255,0.2);
+        .sidebar a {
+            display: block;
+            padding: 10px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover {
+            background: #636e72;
+            border-radius: 5px;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
             padding: 20px;
-            margin: 15px;
+            background: #f4f6f9;
+        }
+
+        .dark .main {
+            background: #1e1e1e;
+        }
+
+        /* Cards */
+        .cards {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
             border-radius: 10px;
+            color: white;
+        }
+
+        .income { background: #00b894; }
+        .expense { background: #d63031; }
+        .balance { background: #0984e3; }
+
+        /* Forms */
+        .box {
+            background: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+
+        .dark .box {
+            background: #2c2c2c;
         }
 
         input, select {
             padding: 8px;
             margin: 5px;
-            border-radius: 5px;
-            border: none;
         }
 
         button {
             padding: 8px 15px;
-            background: #ff7eb3;
-            border: none;
+            background: #6c5ce7;
             color: white;
-            border-radius: 5px;
+            border: none;
             cursor: pointer;
         }
 
@@ -65,64 +105,68 @@
 
         ul {
             list-style: none;
-            padding: 0;
         }
 
         li {
             padding: 8px;
             margin: 5px;
-            background: rgba(255,255,255,0.3);
+            background: #dfe6e9;
             border-radius: 5px;
         }
 
-        /* 📱 Mobile responsive */
-        @media (max-width: 600px) {
-            .container {
-                width: 95%;
-            }
-
-            .card {
-                margin: 10px 5px;
-            }
-
-            input, select {
-                width: 90%;
-            }
+        .dark li {
+            background: #444;
         }
     </style>
 </head>
 
 <body>
 
-<div class="navbar">
-    <h2>💰 Budget Buddy</h2>
-    <div>
-        <button onclick="toggleMode()">🌙</button>
-        <a href="/logout" style="color:white;"><i class="fa fa-sign-out-alt"></i></a>
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>💰 Budget</h2>
+    <a href="#"><i class="fa fa-home"></i> Dashboard</a>
+    <a href="#"><i class="fa fa-history"></i> History</a>
+    <a href="/logout"><i class="fa fa-sign-out-alt"></i> Logout</a>
+    <br>
+    <button onclick="toggleMode()">🌙 Mode</button>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+<h2>Welcome, {{ username }}</h2>
+
+<!-- Summary Cards -->
+<div class="cards">
+    <div class="card income">
+        <h3>Income</h3>
+        <p>₹{{ income }}</p>
+    </div>
+
+    <div class="card expense">
+        <h3>Expense</h3>
+        <p>₹{{ total_expense }}</p>
+    </div>
+
+    <div class="card balance">
+        <h3>Balance</h3>
+        <p>₹{{ balance }}</p>
     </div>
 </div>
 
-<div class="container">
-
-<h2>Welcome, {{ username }} 👋</h2>
-
-<div class="card">
-    <h3><i class="fa fa-chart-line"></i> Summary</h3>
-    <p>Income: ₹{{ income }}</p>
-    <p>Expense: ₹{{ total_expense }}</p>
-    <p>Balance: ₹{{ balance }}</p>
-</div>
-
-<div class="card">
-    <h3><i class="fa fa-wallet"></i> Add Income</h3>
+<!-- Add Income -->
+<div class="box">
+    <h3>Add Income</h3>
     <form method="POST" action="/add_income">
-        <input type="number" name="amount" placeholder="Enter Income" required>
-        <button><i class="fa fa-plus"></i> Add</button>
+        <input type="number" name="amount" required>
+        <button>Add</button>
     </form>
 </div>
 
-<div class="card">
-    <h3><i class="fa fa-cart-plus"></i> Add Expense</h3>
+<!-- Add Expense -->
+<div class="box">
+    <h3>Add Expense</h3>
     <form method="POST" action="/add_expense">
 
         <select name="category">
@@ -148,25 +192,27 @@
         </select>
 
         <input type="date" name="date" required>
-        <input type="number" name="amount" placeholder="Amount" required>
+        <input type="number" name="amount" required>
 
-        <button><i class="fa fa-plus-circle"></i> Add</button>
+        <button>Add</button>
     </form>
 </div>
 
-<div class="card">
-    <h3><i class="fa fa-chart-pie"></i> Expense Chart</h3>
+<!-- Chart -->
+<div class="box">
+    <h3>Expense Chart</h3>
     <canvas id="chart"></canvas>
 </div>
 
-<div class="card">
-    <h3><i class="fa fa-history"></i> History</h3>
+<!-- History -->
+<div class="box">
+    <h3>History</h3>
     <ul>
     {% for item in expenses %}
         <li>
             {{ item.category }} - ₹{{ item.amount }}
             ({{ item.month }} | {{ item.date }})
-            <a href="/delete/{{ loop.index0 }}">❌</a>
+            <a href="/delete/{{ loop.index }}">❌</a>
         </li>
     {% endfor %}
     </ul>
@@ -186,21 +232,14 @@ expenses.forEach(item => {
     categoryTotals[item.category] += item.amount;
 });
 
-// 🎬 Animated chart
 new Chart(document.getElementById("chart"), {
     type: 'pie',
     data: {
         labels: Object.keys(categoryTotals),
         datasets: [{
             data: Object.values(categoryTotals),
-            backgroundColor: ["#ff6384","#36a2eb","#ffcd56","#4bc0c0"]
+            backgroundColor: ["#00cec9","#fd79a8","#fdcb6e","#6c5ce7"]
         }]
-    },
-    options: {
-        animation: {
-            animateScale: true,
-            animateRotate: true
-        }
     }
 });
 
